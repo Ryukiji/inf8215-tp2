@@ -1,36 +1,38 @@
-include "globals.mzn"; 
+include "globals.mzn";
 
-int: r; % number of rows 
-int: c; % number of columns
-array[1..r] of int: rowinsects; % total of insects by row
-array[1..c] of int: colinsects; % total of insects by col
-array[1..r, 1..c] of 0..r*c: knownpositions;  % known number of insects, 0 appears when unknown
+int: r;
+int: c;
 
+% Garden definition
+set of int: HEIGHT = 1..r;
+set of int: WIDTH = 1..c;
+array[HEIGHT] of int: rowinsects;
+array[WIDTH] of int: colinsects;
 
-array[1..r, 1..c] of var 1..r*c: x; % the final garden grid (decision variable)
+array[HEIGHT, WIDTH] of var int: knownpositions;
+array[HEIGHT,WIDTH] of var int: garden; % Number of bugs on (i, j)
 
+% All different in rows and columns
+constraint forall (i in HEIGHT) (
+                   alldifferent([garden[i,j] | j in WIDTH])); 
+constraint forall (j in WIDTH) (
+                   alldifferent([garden[i,j] | i in HEIGHT]));
 
-output [
-  "["
-]
-++
-[
-  if j = 1 then "\n" else "," endif ++
-    if fix(x[i,j]) < 10 then "  " else " "  endif ++
-    show(x[i,j]) ++
-  if j = c then 
-    ", f(" ++ show(rowinsects[i]) ++ "),"
-  else 
-    ""
-  endif
-  | i in 1..r, j in 1..c
-] 
-++
-["\n"]++
-[
-  "f(" ++ show(colinsects[j]) ++ "),"
-  | j in 1..c
-]
+% Constraints on values
+constraint forall(i in HEIGHT, j in WIDTH) (
+  garden[i, j] >= 0);
+constraint forall(j in WIDTH) (
+  sum([garden[i,j] | i in HEIGHT]) = colinsects[j]);
+constraint forall(i in HEIGHT) (
+  sum([garden[i,j] | j in WIDTH]) = rowinsects[i]);
+  
+% Known positions
+constraint forall(i in HEIGHT, j in WIDTH) (
+  if knownpositions[i,j] != 0 then garden[i,j] = knownpositions[i,j] endif);
 
-++ ["]\n"]
-;
+solve satisfy;
+
+output [ show(garden[i,j]) ++ 
+         if j == c then "\n" else "\t" endif |
+         i in HEIGHT, j in WIDTH
+];
