@@ -46,8 +46,36 @@ constraint forall(i, j in SIZE) (
   endif);
 
 % each plant must be next to at least one lamp horizontally or vertically
+constraint forall(i, j in SIZE) (
+  if x[i, j] = P
+    then count(val in
+      [x[k, j] | k in 
+        if i>1 then i-1 else 1 endif ..
+        if i<n then i+1 else n endif])(
+      val = L) +
+    count(val in
+      [x[i, l] | l in 
+        if j>1 then j-1 else 1 endif ..
+        if j<n then j+1 else n endif])(
+      val = L) >= 
+      1
+  endif);
 
 % each lamp must be next to at least one plant horizontally or vertically
+constraint forall(i, j in SIZE)(
+  if x[i,j] = L
+    then count(val in
+      [x[k, j] | k in 
+        if i>1 then i-1 else 1 endif ..
+        if i<n then i+1 else n endif])(
+      val = P) +
+    count(val in
+      [x[i, l] | l in 
+        if j>1 then j-1 else 1 endif ..
+        if j<n then j+1 else n endif])(
+      val = P) >= 
+      1
+  endif);
 
 solve satisfy;
 
